@@ -71,7 +71,8 @@ class Login extends Component {
     render() {
         return (
             <div className="main-container">
-                <Header/>
+                <Header
+                  screen={"Login"}/>
                 <Card style={styles.card}>
                     <CardContent>
                         <Typography style={styles.title}> LOGIN </Typography><br />

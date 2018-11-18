@@ -73,7 +73,8 @@ class Home extends Component{
       comments:{},
       currrentComment:""
     }
-}
+  }
+
   componentDidMount(){
     this.getUserInfo();
     this.getMediaData();
@@ -85,8 +86,7 @@ class Home extends Component{
       <div>
         <Header
           userProfileUrl={this.state.userData.profile_picture}
-          isSearchBarVisible={true}
-          isProfileIconVisible={true}
+          screen={"Home"}
           searchHandler={this.onSearchEntered}
           handleLogout={this.logout}
           handleAccount={this.navigateToAccount}/>
@@ -211,7 +211,7 @@ class Home extends Component{
   }
 
   navigateToAccount = () =>{
-    // this.props.history.push('/account');
+    this.props.history.push('/profile');
   }
 }
 
