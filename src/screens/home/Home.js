@@ -74,7 +74,7 @@ class Home extends Component{
       currrentComment:""
     }
   }
-  
+
   componentDidMount(){
     this.getUserInfo();
     this.getMediaData();
@@ -86,8 +86,7 @@ class Home extends Component{
       <div>
         <Header
           userProfileUrl={this.state.userData.profile_picture}
-          isSearchBarVisible={true}
-          isProfileIconVisible={true}
+          screen={"Home"}
           searchHandler={this.onSearchEntered}
           handleLogout={this.logout}
           handleAccount={this.navigateToAccount}/>

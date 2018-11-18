@@ -7,9 +7,9 @@ import {withStyles} from '@material-ui/core/styles';
 import SearchIcon from '@material-ui/icons/Search';
 import Avatar from '@material-ui/core/Avatar';
 import IconButton from '@material-ui/core/IconButton';
-import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Popover from '@material-ui/core/Popover';
+import { Link } from 'react-router-dom';
 
 const styles = theme => ({
   grow: {
@@ -71,13 +71,14 @@ class Header extends Component{
   }
 
   render(){
-    const {classes, isSearchBarVisible, isProfileIconVisible} = this.props;
+    const {classes,screen} = this.props;
     return (<div>
         <AppBar className={classes.appHeader}>
           <Toolbar>
-            <span className="header-logo">Image Viewer</span>
+            {(screen === "Login" || screen === "Home") && <span className="header-logo">Image Viewer</span>}
+            {(screen === "Profile") && <Link style={{ textDecoration: 'none', color: 'white' }} to="/home"><span className="header-logo">Image Viewer</span></Link>}
             <div className={classes.grow}/>
-            {isSearchBarVisible &&
+            {(screen === "Home") &&
               <div className={classes.search}>
                 <div className={classes.searchIcon}>
                   <SearchIcon />
@@ -87,7 +88,7 @@ class Header extends Component{
                   }}/>
               </div>
             }
-            {isProfileIconVisible &&
+            {(screen === "Home" || screen === "Profile")  &&
               <div>
                 <IconButton onClick={this.handleClick}>
                   <Avatar alt="Profile Pic" src={this.props.userProfileUrl} className={classes.avatar} style={{border: "1px solid #fff"}}/>
@@ -106,8 +107,12 @@ class Header extends Component{
                     horizontal: 'left',
                   }}>
                     <div style={{padding:'5px'}}>
-                      <MenuItem onClick={this.handleAccount}>My Account</MenuItem>
-                      <div className={classes.hr}/>
+                      { (screen === "Home") &&
+                        <div>
+                          <MenuItem onClick={this.handleAccount}>My Account</MenuItem>
+                          <div className={classes.hr}/>
+                        </div>
+                      }
                       <MenuItem onClick={this.handleLogout}>Logout</MenuItem>
                     </div>
                 </Popover>

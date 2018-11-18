@@ -14,6 +14,9 @@ import FormHelperText from '@material-ui/core/FormHelperText';
 import CardMedia from '@material-ui/core/CardMedia';
 import GridList from '@material-ui/core/GridList';
 import GridListTile from '@material-ui/core/GridListTile';
+import IconButton from '@material-ui/core/IconButton';
+import FavoriteIconBorder from '@material-ui/icons/FavoriteBorder';
+import FavoriteIconFill from '@material-ui/icons/Favorite';
 
 const styles = {
     paper: {
@@ -30,13 +33,10 @@ const styles = {
         paddingTop: '56.25%', // 16:9
     },
     imageModal: {
-        position: 'relative',
         backgroundColor: "#fff",
-        top: "30%",
-        width: "50%",
         margin: "0 auto",
         boxShadow: "2px 2px #888888",
-        padding: "20px"
+        padding: "10px",
     }
 };
 
@@ -59,7 +59,9 @@ class Profile extends Component {
             newFullName: '',
             mediaData: null,
             imageModalOpen: false,
-            currentItem: null
+            currentItem: null,
+            likeSet:new Set(),
+            comments:{},
         }
     }
 
@@ -126,14 +128,14 @@ class Profile extends Component {
     }
 
     inputFullNameChangeHandler = (e) => {
-        this.setState({ 
+        this.setState({
             newFullName: e.target.value
         })
     }
 
     updateClickHandler = () => {
         if (this.state.newFullName === '') {
-            this.setState({ fullNameRequired: 'dispBlock'}) 
+            this.setState({ fullNameRequired: 'dispBlock'})
         } else {
             this.setState({ fullNameRequired: 'dispNone' })
         }
@@ -147,10 +149,73 @@ class Profile extends Component {
         this.handleCloseEditModal()
     }
 
+    likeClickHandler = (id) =>{
+      console.log('like id',id);
+      var foundItem = this.state.currentItem;
+
+      if (typeof foundItem !== undefined) {
+        if (!this.state.likeSet.has(id)) {
+          foundItem.likes.count++;
+          this.setState(({likeSet}) => ({
+            likeSet:new Set(likeSet.add(id))
+          }))
+        }else {
+          foundItem.likes.count--;
+          this.setState(({likeSet}) =>{
+            const newLike = new Set(likeSet);
+            newLike.delete(id);
+
+            return {
+              likeSet:newLike
+            };
+          });
+        }
+      }
+    }
+
+    onAddCommentClicked = (id) => {
+      console.log('id',id);
+      if (this.state.currentComment === "" || typeof this.state.currentComment === undefined) {
+        return;
+      }
+
+      let commentList = this.state.comments.hasOwnProperty(id)?
+        this.state.comments[id].concat(this.state.currentComment): [].concat(this.state.currentComment);
+
+      this.setState({
+        comments:{
+          ...this.state.comments,
+          [id]:commentList
+        },
+        currentComment:''
+      })
+    }
+
+    commentChangeHandler = (e) => {
+      this.setState({
+        currentComment:e.target.value
+      });
+    }
+
+    logout = () => {
+      sessionStorage.clear();
+      this.props.history.replace('/');
+    }
+
     render() {
+      let hashTags = []
+      if (this.state.currentItem !== null) {
+        hashTags = this.state.currentItem.tags.map(hash =>{
+          return "#"+hash;
+        });
+        console.log('state',this.state);
+      }
         return(
             <div>
-                <Header />
+                <Header
+                  screen={"Profile"}
+                  userProfileUrl={this.state.profile_picture}
+                  handleLogout={this.logout}/>
                 <div className="information-section">
                     <Avatar
                         alt="User Image"
@@ -158,13 +223,13 @@ class Profile extends Component {
                         style={{width: "50px", height: "50px"}}
                     />
                     <span style={{marginLeft: "20px"}}>
-                        <div style={{width: "600px", fontSize: "small"}}> {this.state.username} <br />
+                        <div style={{width: "600px", fontSize: "big"}}> {this.state.username} <br />
                             <div style={{float: "left", width: "200px", fontSize: "x-small"}}> Posts: {this.state.posts} </div>
                             <div style={{float: "left", width: "200px", fontSize: "x-small"}}> Follows: {this.state.follows} </div>
                             <div style={{float: "left", width: "200px", fontSize: "x-small"}}> Followed By: {this.state.followed_by}</div> <br />
                         </div>
                         <div style={{fontSize: "small"}}> {this.state.full_name}
-                        <Button variant="fab" color="secondary" aria-label="Edit" style={{marginLeft: "20px"}} onClick={this.handleOpenEditModal}>
+                        <Button mini variant="fab" color="secondary" aria-label="Edit" style={{marginLeft: "20px"}} onClick={this.handleOpenEditModal}>
                             <Icon>edit_icon</Icon>
                         </Button>
                         </div>
@@ -191,7 +256,7 @@ class Profile extends Component {
                         </Modal>
                     </span>
                 </div>
-                
+
                 {this.state.mediaData != null &&
                 <GridList cellHeight={'auto'} cols={3} style={{padding: "40px"}}>
                 {this.state.mediaData.map(item => (
@@ -206,28 +271,78 @@ class Profile extends Component {
                     </GridListTile>
                 ))}
                 </GridList>}
-                
+
                 {this.state.currentItem != null &&
                 <Modal
                     aria-labelledby="image-modal"
                     aria-describedby="modal to show image details"
                     open={this.state.imageModalOpen}
                     onClose={this.handleCloseImageModal}
-                    style={{alignItems: 'center', justifyContent: 'center'}}
-                >
-                    <div style={styles.imageModal}>
-                        <div>
-                            <img src={this.state.currentItem.images.standard_resolution.url} alt={this.state.currentItem.caption.text} />
-                        </div>
-                        <div>
-                            <Avatar
+                    style={{display:'flex',justifyContent:'center',alignItems:'center'}}>
+                    <div style={{display:'flex',flexDirection:'row',backgroundColor: "#fff",width:'70%',height:'70%'}}>
+                      <div style={{width:'50%',padding:10}}>
+                        <img style={{height:'100%',width:'100%'}}
+                          src={this.state.currentItem.images.standard_resolution.url}
+                          alt={this.state.currentItem.caption.text} />
+                      </div>
+
+                      <div style={{display:'flex', flexDirection:'column', width:'50%', padding:10}}>
+                        <div style={{borderBottom:'2px solid #f2f2f2',display:'flex', flexDirection:'row',justifyContent:'flex-start',alignItems:'center'}}>
+                          <Avatar
                             alt="User Image"
                             src={this.state.profile_picture}
-                            style={{width: "50px", height: "50px"}}
-                            />
-                            {this.state.username} <hr />
-                            {this.state.currentItem.caption.text}
+                            style={{width: "50px", height: "50px",margin:'10px'}}/>
+                            <Typography component="p">
+                              {this.state.username}
+                            </Typography>
                         </div>
+                        <div style={{display:'flex', height:'100%', flexDirection:'column', justifyContent:'space-between'}}>
+                          <div>
+                            <Typography component="p">
+                              {this.state.currentItem.caption.text}
+                            </Typography>
+                            <Typography style={{color:'#4dabf5'}} component="p" >
+                              {hashTags.join(' ')}
+                            </Typography>
+                            {this.state.comments.hasOwnProperty(this.state.currentItem.id) && this.state.comments[this.state.currentItem.id].map((comment, index)=>{
+                              return(
+                                <div key={index} className="row">
+                                  <Typography component="p" style={{fontWeight:'bold'}}>
+                                    {sessionStorage.getItem('username')}:
+                                  </Typography>
+                                  <Typography component="p" >
+                                    {comment}
+                                  </Typography>
+                                </div>
+                              )
+                            })}
+                          </div>
+                          <div>
+                            <div className="row">
+                              <IconButton aria-label="Add to favorites" onClick={this.likeClickHandler.bind(this,this.state.currentItem.id)}>
+                                {this.state.likeSet.has(this.state.currentItem.id) && <FavoriteIconFill style={{color:'#F44336'}}/>}
+                                {!this.state.likeSet.has(this.state.currentItem.id) && <FavoriteIconBorder/>}
+                              </IconButton>
+                              <Typography component="p">
+                                {this.state.currentItem.likes.count} Likes
+                              </Typography>
+                            </div>
+                            <div className="row">
+                              <FormControl style={{flexGrow:1}}>
+                                <InputLabel htmlFor="comment">Add Comment</InputLabel>
+                                <Input id="comment" value={this.state.currentComment} onChange={this.commentChangeHandler}/>
+                              </FormControl>
+                              <FormControl>
+                                <Button onClick={this.onAddCommentClicked.bind(this,this.state.currentItem.id)}
+                                   variant="contained" color="primary">
+                                  ADD
+                                </Button>
+                              </FormControl>
+                            </div>
+                          </div>
+                        </div>
+
+                      </div>
                     </div>
                 </Modal>}
             </div>
